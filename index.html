@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Studio Room Booking</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--fg:#1b2430;--mut:#6b7686;--line:#e2e6ec;--acc:#2f5bea;--accfg:#fff;--busy:#fde0dd;--busyfg:#8f2218;--mine:#dbe6ff;--minefg:#1d3fa8;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161c;--card:#1b212a;--fg:#e8ecf1;--mut:#97a2b2;--line:#2c3541;--acc:#6f93ff;--accfg:#0d1320;--busy:#4a2421;--busyfg:#ffb4aa;--mine:#223463;--minefg:#b7caff}}
+:root[data-theme="dark"]{--bg:#12161c;--card:#1b212a;--fg:#e8ecf1;--mut:#97a2b2;--line:#2c3541;--acc:#6f93ff;--accfg:#0d1320;--busy:#4a2421;--busyfg:#ffb4aa;--mine:#223463;--minefg:#b7caff}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:20px 14px 40px}
+h1{margin:0 0 2px;font-size:22px}
+.sub{color:var(--mut);margin:0 0 14px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.bar .t{font-weight:600;flex:1;min-width:140px}
+button,input{font:inherit;color:inherit}
+button{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button.p{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+input{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 10px;width:100%}
+input[type=date]{width:auto}
+.wrap{overflow:auto;max-height:72vh;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.grid{display:grid;grid-template-columns:58px repeat(7,minmax(112px,1fr));min-width:840px}
+.hd{position:sticky;top:0;z-index:3;background:var(--card);text-align:center;font-weight:600;padding:8px 4px;border-bottom:1px solid var(--line);border-left:1px solid var(--line)}
+.hd small{display:block;color:var(--mut);font-weight:400}
+.hd.today{color:var(--acc)}
+.gut div{height:44px;font-size:11px;color:var(--mut);text-align:right;padding:0 6px;transform:translateY(-7px)}
+.day{position:relative;height:1056px;border-left:1px solid var(--line);cursor:pointer;background:repeating-linear-gradient(to bottom,transparent 0,transparent 43px,var(--line) 43px,var(--line) 44px)}
+.blk{position:absolute;left:3px;right:3px;border-radius:6px;padding:3px 6px;font-size:12px;overflow:hidden;background:var(--busy);color:var(--busyfg);border:1px solid rgba(0,0,0,.08);cursor:pointer}
+.blk.mine{background:var(--mine);color:var(--minefg)}
+.blk b,.blk span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blk span{font-size:11px;opacity:.9}
+.now{position:absolute;left:0;right:0;height:2px;background:var(--acc);z-index:1;pointer-events:none}
+.note{color:var(--mut);font-size:13px;margin-top:12px}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:5}
+#ov.on{display:flex}
+.dlg{background:var(--card);border-radius:14px;padding:18px;width:100%;max-width:380px;border:1px solid var(--line);max-height:100%;overflow:auto}
+.dlg h2{margin:0 0 4px;font-size:17px}
+.dlg label{display:block;margin:10px 0 4px;font-size:13px;color:var(--mut)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chips button{padding:4px 9px;font-size:13px}
+.row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.err{color:var(--busyfg);font-size:13px;margin-top:8px}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 14px;border-radius:9px;display:none;z-index:6;max-width:90%}
+@media (max-width:640px){
+main{padding:14px 10px 32px}
+h1{font-size:20px}
+.grid,.grid.one{min-width:0;grid-template-columns:48px 1fr}
+.wrap{max-height:70vh}
+button{padding:10px 14px}
+.chips button{padding:8px 12px}
+input{font-size:16px;padding:10px}
+.bar .t{order:5;flex-basis:100%;text-align:center}
+.bar #new{flex:1}
+.dlg{padding:16px}
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>Studio Room</h1>
+  <p class="sub">Hudson Studio's &middot; open 24/7 &middot; book any length of time</p>
+  <div class="bar">
+    <button id="prev" aria-label="Previous">&larr;</button>
+    <button id="today">This week</button>
+    <button id="next" aria-label="Next">&rarr;</button>
+    <span class="t" id="range"></span>
+    <input type="date" id="jump" aria-label="Jump to date">
+    <button class="p" id="new">+ Book room</button>
+  </div>
+  <div class="wrap" id="wrap"><div class="grid" id="grid"></div></div>
+  <p class="note" id="note">Tap an empty spot on the calendar to book it. Updates appear within about 10 seconds.</p>
+</main>
+<div id="ov"><div class="dlg" id="dlg"></div></div>
+<div id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// ===== SETUP: paste your two Supabase values between the quotes =====
+var CFG={url:"PASTE_SUPABASE_URL_HERE",key:"PASTE_SUPABASE_KEY_HERE"};
+// ====================================================================
+(function(){
+var mq=window.matchMedia("(max-width:640px)"), HP=44, MIN=60000;
+var sb=null, unlocked=false, code="", list=[], base=new Date(), myName="", first=true, timer=null;
+try{myName=localStorage.getItem("sr_name")||""}catch(e){}
+function pad(n){return (n<10?"0":"")+n}
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function mid(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
+function monday(d){var x=mid(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x}
+function fT(ms){return new Date(ms).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}
+function fD(ms){return new Date(ms).toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"})}
+function loc(ms){var d=new Date(ms);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes())}
+function toast(m){var t=document.getElementById("toast");t.textContent=m;t.style.display="block";clearTimeout(toast.k);toast.k=setTimeout(function(){t.style.display="none"},3200)}
+function closeDlg(){document.getElementById("ov").classList.remove("on")}
+document.getElementById("ov").addEventListener("click",function(e){if(e.target===this&&unlocked)closeDlg()});
+function norm(r){return {id:r.id,name:r.name||"Booked",title:r.title||"",s:Date.parse(r.starts_at),e:Date.parse(r.ends_at)}}
+function isMine(b){return myName&&b.name.toLowerCase()===myName.toLowerCase()}
+
+function render(){
+  var g=document.getElementById("grid"), wrap=document.getElementById("wrap"), keep=wrap.scrollTop;
+  g.textContent="";
+  var one=mq.matches, m=one?mid(base):monday(base), now=Date.now(), tk=mid(new Date()).getTime();
+  var l=new Date(m);l.setDate(l.getDate()+(one?0:6));
+  document.getElementById("range").textContent=one?fD(m.getTime())+", "+m.getFullYear():fD(m.getTime())+" – "+fD(l.getTime())+", "+l.getFullYear();
+  document.getElementById("today").textContent=one?"Today":"This week";
+  g.className="grid"+(one?" one":"");
+  g.appendChild(el("div","hd"));
+  var days=[];
+  for(var i=0;i<(one?1:7);i++){
+    var d=new Date(m);d.setDate(m.getDate()+i);days.push(d);
+    var h=el("div","hd"+(d.getTime()===tk?" today":""),d.toLocaleDateString([],{weekday:"short"}));
+    h.appendChild(el("small",null,d.toLocaleDateString([],{month:"short",day:"numeric"})));
+    g.appendChild(h);
+  }
+  var gut=el("div","gut");
+  for(var hr=0;hr<24;hr++)gut.appendChild(el("div",null,hr===0?"":new Date(2000,0,1,hr).toLocaleTimeString([],{hour:"numeric"})));
+  g.appendChild(gut);
+  days.forEach(function(d){
+    var col=el("div","day"), ds=d.getTime(), de=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1).getTime();
+    col.onclick=function(ev){
+      if(!unlocked)return;
+      var y=ev.clientY-col.getBoundingClientRect().top;
+      openBook(ds+Math.floor(y/HP*4)*15*MIN);
+    };
+    list.forEach(function(b){
+      if(b.e<=ds||b.s>=de)return;
+      var s=Math.max(b.s,ds), e=Math.min(b.e,de);
+      var blk=el("div","blk"+(isMine(b)?" mine":""));
+      blk.style.top=((s-ds)/MIN/60*HP)+"px";
+      blk.style.height=Math.max(18,(e-s)/MIN/60*HP-2)+"px";
+      blk.appendChild(el("b",null,b.name));
+      blk.appendChild(el("span",null,(b.title?b.title+" · ":"")+fT(b.s)+"–"+fT(b.e)));
+      blk.onclick=function(ev){ev.stopPropagation();showBooking(b)};
+      col.appendChild(blk);
+    });
+    if(now>=ds&&now<de){var n=el("div","now");n.style.top=((now-ds)/MIN/60*HP)+"px";col.appendChild(n)}
+    g.appendChild(col);
+  });
+  if(first){first=false;var nm=(now-tk)/MIN/60;wrap.scrollTop=Math.max(0,(nm-1)*HP)||8*HP}else wrap.scrollTop=keep;
+}
+
+function openBook(startMs){
+  var dl=document.getElementById("dlg");dl.textContent="";
+  var dur=60;
+  dl.appendChild(el("h2",null,"Book the studio room"));
+  dl.appendChild(el("label",null,"Your name"));
+  var n=el("input");n.value=myName;n.maxLength=40;dl.appendChild(n);
+  dl.appendChild(el("label",null,"Title (optional)"));
+  var t=el("input");t.maxLength=60;dl.appendChild(t);
+  dl.appendChild(el("label",null,"Start"));
+  var s=el("input");s.type="datetime-local";s.step=300;s.value=loc(startMs);dl.appendChild(s);
+  dl.appendChild(el("label",null,"End"));
+  var e=el("input");e.type="datetime-local";e.step=300;e.value=loc(startMs+dur*MIN);dl.appendChild(e);
+  var chips=el("div","chips");
+  [["15m",15],["30m",30],["1h",60],["2h",120],["4h",240],["8h",480],["24h",1440]].forEach(function(c){
+    var b=el("button",null,c[0]);b.type="button";
+    b.onclick=function(){dur=c[1];var st=new Date(s.value).getTime();if(!isNaN(st))e.value=loc(st+dur*MIN)};
+    chips.appendChild(b);
+  });
+  dl.appendChild(chips);
+  s.onchange=function(){var st=new Date(s.value).getTime();if(!isNaN(st))e.value=loc(st+dur*MIN)};
+  e.onchange=function(){var a=new Date(s.value).getTime(),b=new Date(e.value).getTime();if(!isNaN(a)&&!isNaN(b)&&b>a)dur=Math.round((b-a)/MIN)};
+  var err=el("div","err");dl.appendChild(err);
+  var r=el("div","row"),c=el("button",null,"Cancel"),ok=el("button","p","Book it");
+  c.onclick=closeDlg;
+  ok.onclick=async function(){
+    err.textContent="";
+    var nm=n.value.trim(), a=new Date(s.value).getTime(), b=new Date(e.value).getTime();
+    if(!nm){err.textContent="Please enter your name.";return}
+    if(isNaN(a)||isNaN(b)||b<=a){err.textContent="End must be after start.";return}
+    if(b-a>7*24*60*MIN){err.textContent="Bookings can be at most 7 days.";return}
+    if(b<=Date.now()){err.textContent="That time has already passed.";return}
+    var clash=list.filter(function(x){return x.s<b&&x.e>a})[0];
+    if(clash){err.textContent="Overlaps "+clash.name+"'s booking ("+fD(clash.s)+" "+fT(clash.s)+"–"+fT(clash.e)+").";return}
+    ok.disabled=true;
+    try{
+      var res=await sb.from("bookings").insert({name:nm,title:t.value.trim(),starts_at:new Date(a).toISOString(),ends_at:new Date(b).toISOString()});
+      if(res.error){err.textContent=res.error.code==="23P01"?"Someone just booked an overlapping time. Please pick another.":"Couldn't save. Please try again.";return}
+      myName=nm;try{localStorage.setItem("sr_name",nm)}catch(x){}
+      toast("Booked!");closeDlg();load();
+    }catch(x){err.textContent="Couldn't save. Check your connection and try again."}
+    finally{ok.disabled=false}
+  };
+  r.appendChild(c);r.appendChild(ok);dl.appendChild(r);
+  document.getElementById("ov").classList.add("on");n.focus();
+}
+
+function showBooking(b){
+  var dl=document.getElementById("dlg");dl.textContent="";
+  dl.appendChild(el("h2",null,b.name));
+  dl.appendChild(el("div","sub",fD(b.s)+" "+fT(b.s)+" – "+(new Date(b.s).toDateString()===new Date(b.e).toDateString()?"":fD(b.e)+" ")+fT(b.e)));
+  if(b.title)dl.appendChild(el("div",null,b.title));
+  var r=el("div","row"),c=el("button",null,"Close");c.onclick=closeDlg;r.appendChild(c);
+  if(isMine(b)&&b.e>Date.now()){
+    var x=el("button","p","Cancel booking");
+    x.onclick=async function(){
+      try{var res=await sb.from("bookings").delete().eq("id",b.id);if(res.error)throw res.error;toast("Booking cancelled");closeDlg();load()}
+      catch(e){toast("Couldn't cancel. Please try again.")}
+    };
+    r.appendChild(x);
+  }
+  dl.appendChild(r);
+  document.getElementById("ov").classList.add("on");
+}
+
+function connect(){sb=supabase.createClient(CFG.url,CFG.key)}
+function unlock(){
+  unlocked=true;
+  load();
+  if(!timer)timer=setInterval(function(){if(!document.hidden)load()},10000);
+}
+async function load(){
+  if(!sb||!unlocked)return;
+  try{
+    var since=new Date(Date.now()-60*864e5).toISOString();
+    var res=await sb.from("bookings").select("*").gte("ends_at",since).order("starts_at");
+    if(res.error)return;
+    list=res.data.map(norm);render();
+  }catch(e){}
+}
+
+function shift(n){base=new Date(base.getFullYear(),base.getMonth(),base.getDate()+n);render()}
+document.getElementById("prev").onclick=function(){shift(mq.matches?-1:-7)};
+document.getElementById("next").onclick=function(){shift(mq.matches?1:7)};
+document.getElementById("today").onclick=function(){base=new Date();render()};
+document.getElementById("new").onclick=function(){if(!unlocked)return;var d=new Date();d.setMinutes(Math.ceil(d.getMinutes()/15)*15,0,0);openBook(d.getTime())};
+document.getElementById("jump").onchange=function(){if(!this.value)return;var p=this.value.split("-");base=new Date(+p[0],+p[1]-1,+p[2]);render()};
+document.addEventListener("visibilitychange",function(){if(!document.hidden)load()});
+try{mq.addEventListener("change",render)}catch(e){}
+render();
+
+(async function(){
+  if(/PASTE_/.test(CFG.url+CFG.key)){document.getElementById("note").textContent="Setup isn't finished yet: add your Supabase URL and key near the top of index.html.";return}
+  if(typeof supabase==="undefined"){document.getElementById("note").textContent="Couldn't load the database library. Check your connection.";return}
+  connect();unlock();
+})();
+})();
+</script>
+</body>
+</html>
