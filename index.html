@@ -178,7 +178,7 @@ function openBook(startMs){
     ok.disabled=true;
     try{
       var res=await sb.from("bookings").insert({name:nm,title:t.value.trim(),starts_at:new Date(a).toISOString(),ends_at:new Date(b).toISOString()});
-      if(res.error){err.textContent=res.error.code==="23P01"?"Someone just booked an overlapping time. Please pick another.":"Couldn't save: "+res.error.message";return}
+       if(res.error){err.textContent=res.error.code==="23P01"?"Someone just booked an overlapping time. Please pick another.":"Couldn't save: "+res.error.message;return}
       myName=nm;try{localStorage.setItem("sr_name",nm)}catch(x){}
       toast("Booked!");closeDlg();load();
     }catch(x){err.textContent="Couldn't save. Check your connection and try again."}
